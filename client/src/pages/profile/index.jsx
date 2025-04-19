@@ -1,4 +1,4 @@
-import { userAppStore } from "@/store"
+import { useAppStore } from "@/store"
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoArrowBack} from "react-icons/io5"
@@ -13,7 +13,7 @@ import { ADD_PROFILE_IMAGE_ROUTE, HOST, REMOVE_PROFILE_IMAGE_ROUTE, UPDATE_PROFI
 
 const Profile = () => {
   const navigate = useNavigate();
-  const {userInfo, setUserInfo} = userAppStore();
+  const {userInfo, setUserInfo} = useAppStore();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [image, setImage] = useState(null);

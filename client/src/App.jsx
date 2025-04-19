@@ -4,26 +4,26 @@ import { BrowserRouter, Route, Routes, Navigate} from 'react-router-dom';
 import Auth from './pages/auth';
 import Chat from './pages/chat';
 import Profile from './pages/profile';
-import { userAppStore } from './store';
+import { useAppStore } from './store';
 import { apiClient } from './lib/api-client';
 import { GET_USER_INFO } from './utils/constants';
 
 
 const PrivateRoute = ({children}) => {
-  const {userInfo} = userAppStore();
+  const {userInfo} = useAppStore();
   const isAuthenticated =   !!userInfo;
   return isAuthenticated ? children : <Navigate to="/auth" />;
 };
 
 const AuthRoute = ({children}) => {
-  const {userInfo} = userAppStore();
+  const {userInfo} = useAppStore();
   const isAuthenticated =   !!userInfo;
   return isAuthenticated ? <Navigate to="/chat" /> : children;
 };
 
 const App = () => {
 
-  const {userInfo, setUserInfo} = userAppStore();
+  const {userInfo, setUserInfo} = useAppStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

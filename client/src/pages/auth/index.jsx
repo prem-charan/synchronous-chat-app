@@ -8,11 +8,11 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { LOGIN_ROUTE, SIGNUP_ROUTE } from "@/utils/constants";
 import { useNavigate } from "react-router-dom";
-import { userAppStore } from "@/store";
+import { useAppStore } from "@/store";
 
 const Auth = () => {
     const navigate = useNavigate();
-    const {setUserInfo} = userAppStore();
+    const {setUserInfo} = useAppStore();
     const [email, setEmail] = useState("")
     const [password, setPassword] =  useState("")
     const [confirmPassword, setConfirmPassword] = useState("")

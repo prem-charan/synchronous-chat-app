@@ -1,7 +1,7 @@
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getColor } from "@/lib/utils";
-import { userAppStore } from "@/store";
+import { useAppStore } from "@/store";
 import { HOST, LOGOUT_ROUTE } from "@/utils/constants";
 import { FiEdit2 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +9,7 @@ import { IoPowerSharp } from "react-icons/io5";
 import { apiClient } from "@/lib/api-client";
 
 const ProfileInfo = () => {
-    const {userInfo} = userAppStore();
+    const {userInfo} = useAppStore();
     const navigate = useNavigate();
 
     const logOut = async () => {
