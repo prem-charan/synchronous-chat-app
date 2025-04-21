@@ -17,7 +17,7 @@ const ProfileInfo = () => {
             const response = await apiClient.post(LOGOUT_ROUTE, {}, {withCredentials: true});
             if(response.status === 200) {
                 navigate("/auth");
-                setUserInfo(null);
+                setuserInfo(null);
             }
         } catch(error) {
             console.log(error);
