@@ -59,6 +59,13 @@ const MessageBar = () => {
     setMessage("");
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" && !event.shiftKey && message.trim()) {
+      event.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   const handleAttachmentClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -116,6 +123,7 @@ const MessageBar = () => {
           placeholder="Enter Message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
         <button
           className="text-neutral-500 focus:border-none focus:outline-none focus:text-white duration-300 transition-all"

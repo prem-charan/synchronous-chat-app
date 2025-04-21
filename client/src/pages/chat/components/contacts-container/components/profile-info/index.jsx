@@ -9,15 +9,15 @@ import { IoPowerSharp } from "react-icons/io5";
 import { apiClient } from "@/lib/api-client";
 
 const ProfileInfo = () => {
-    const {userInfo} = useAppStore();
+    const {userInfo, setUserInfo} = useAppStore();
     const navigate = useNavigate();
 
     const logOut = async () => {
         try {
             const response = await apiClient.post(LOGOUT_ROUTE, {}, {withCredentials: true});
             if(response.status === 200) {
+                setUserInfo(undefined);
                 navigate("/auth");
-                setuserInfo(null);
             }
         } catch(error) {
             console.log(error);
