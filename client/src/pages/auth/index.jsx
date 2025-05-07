@@ -47,13 +47,17 @@ const Auth = () => {
 
     const handleLogin = async () => {
         if(validateLogin()) {
-            const response = await apiClient.post(LOGIN_ROUTE, {email, password}, {withCredentials:true});
-            if(response.data.user.id) {
-                setUserInfo(response.data.user);
-                if(response.data.user.profileSetup) navigate("/chat");
-                else navigate("/profile");
+            try {
+                const response = await apiClient.post(LOGIN_ROUTE, {email, password}, {withCredentials:true});
+                if(response.data.user.id) {
+                    setUserInfo(response.data.user);
+                    if(response.data.user.profileSetup) navigate("/chat");
+                    else navigate("/profile");
+                }
+            } catch(error) {
+                toast.error("Invalid email or password.");
             }
-            //console.log({ response });
+             //console.log({ response });
         }
     };
 
@@ -65,7 +69,7 @@ const Auth = () => {
             if(response.status === 201) {
                 navigate("/profile");
             }
-            console.log({ response });
+                // console.log({ response });
         }
     };
 
