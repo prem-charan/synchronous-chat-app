@@ -46,10 +46,12 @@ export const login = async (request, response, next) => {
     if(!auth) {
         return response.status(400).send("Password is incorrect.");
     }
-    response.cookie("jwt", createToken(email, user.id), {
+    const token = createToken(email, user.id);
+    response.cookie("jwt", token, {
       maxAge,
       secure: true,
       sameSite: "None",
+      domain: process.env.COOKIE_DOMAIN || undefined,
     });
     return response.status(200).json({
       user: {
@@ -63,7 +65,7 @@ export const login = async (request, response, next) => {
       },
     });
   } catch (error) {
-    console.log({ error });
+    console.log('Login error:', error);
     return response.status(500).send("Internal Server Error");
   }
 };

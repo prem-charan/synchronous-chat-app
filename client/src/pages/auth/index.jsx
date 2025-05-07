@@ -97,6 +97,7 @@ const Auth = () => {
                         </TabsList>
                         <TabsContent className="flex flex-col gap-5 mt-10" 
                         value="login">
+                        <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
                         <Input placeholder="Email" 
                         type="email" 
                         className="rounded-full p-6" 
@@ -112,10 +113,12 @@ const Auth = () => {
                         <Button className="rounded-full p-6" onClick={handleLogin}>
                             Login
                         </Button>
+                        </form>
                         </TabsContent>
                         <TabsContent className="flex flex-col gap-5" 
                         value="signup"
                         >
+                        <form onSubmit={(e) => { e.preventDefault(); handleSignup(); }}>
                         <Input placeholder="Email" 
                         type="email" 
                         className="rounded-full p-6" 
@@ -137,6 +140,7 @@ const Auth = () => {
                         <Button className="rounded-full p-6" onClick={handleSignup}>
                             Signup
                         </Button>
+                        </form>
                         </TabsContent>
                     </Tabs>
                 </div>

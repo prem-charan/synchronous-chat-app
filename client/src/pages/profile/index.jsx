@@ -77,13 +77,22 @@ const Profile = () => {
     const file = event.target.files[0];
     console.log({ file });
     if(file) {
-      const formData = new FormData();
-      formData.append("profile-image", file);
-      const response = await apiClient.post(ADD_PROFILE_IMAGE_ROUTE, formData, {withCredentials: true,});
-      if(response.status === 200 && response.data.image) {
-        setUserInfo({...userInfo, image: response.data.image});
-        setImage(`${HOST}/${response.data.image}`);
-        toast.success("Image updated successfully.");
+      try {
+        const formData = new FormData();
+        formData.append("profile-image", file);
+        const response = await apiClient.post(ADD_PROFILE_IMAGE_ROUTE, formData, {withCredentials: true,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
+        });
+        if(response.status === 200 && response.data.image) {
+          setUserInfo({...userInfo, image: response.data.image});
+          setImage(`${HOST}/${response.data.image}`);
+          toast.success("Image updated successfully.");
+        }
+      } catch(error) {
+        console.error('Image upload error:', error);
+        toast.error('Failed to upload image. Please try again.');
       }
       // const reader = new FileReader();
       // reader.onload = () => {
