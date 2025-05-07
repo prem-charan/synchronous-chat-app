@@ -45,12 +45,12 @@ const App = () => {
           setLoading(false);
         }
     };
-    if(!userInfo) {
+    if(!userInfo && loading) {
       getUserData();
     }else {
       setLoading(false);
     }
-  }, [userInfo, setUserInfo]);
+  }, []);
 
   if(loading) {
     return <div>Loading...</div>;
