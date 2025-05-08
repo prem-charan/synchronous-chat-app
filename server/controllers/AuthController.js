@@ -17,8 +17,11 @@ export const signup = async (request, response, next) => {
         const user = await User.create({email, password});
         response.cookie("jwt", createToken(email, user.id), {
             maxAge,
-            secure:true,
-            sameSite: "None",
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+            path: "/",
+            httpOnly: true,
+            domain: process.env.COOKIE_DOMAIN || undefined,
         });
         return response.status(201).json({user:{
             id: user.id,
@@ -49,11 +52,11 @@ export const login = async (request, response, next) => {
     const token = createToken(email, user.id);
     response.cookie("jwt", token, {
       maxAge,
-      secure: false,
-      sameSite: "Lax",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
       path: "/",
       httpOnly: true,
-      // domain: process.env.COOKIE_DOMAIN || undefined,
+      domain: process.env.COOKIE_DOMAIN || undefined,
     });
     return response.status(200).json({
       user: {

@@ -65,6 +65,9 @@ export const SocketProvider = ({ children }) => {
       query: { userId: userInfo.id },
       transports: ["websocket", "polling"],
       autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     socket.current.on("connect", () => {
