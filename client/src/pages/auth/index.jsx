@@ -11,68 +11,86 @@ import { useNavigate } from "react-router-dom";
 import { useAppStore } from "@/store";
 
 const Auth = () => {
-    const navigate = useNavigate();
-    const {setUserInfo} = useAppStore();
-    const [email, setEmail] = useState("")
-    const [password, setPassword] =  useState("")
-    const [confirmPassword, setConfirmPassword] = useState("")
+  const navigate = useNavigate();
+  const { setUserInfo } = useAppStore();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-    const validateLogin = () => {
-        if(!email.length) {
-            toast.error("Email is required.");
-            return false;
-        }
-        if(!password.length) {
-            toast.error("Password is required.");
-            return false;
-        }
-        return true;
-    };
+  const validateLogin = () => {
+    if (!email.length) {
+      toast.error("Email is required.");
+      return false;
+    }
+    if (!password.length) {
+      toast.error("Password is required.");
+      return false;
+    }
+    return true;
+  };
 
-    const validateSignup = () => {
-        if(!email.length) {
-            toast.error("Email is required.");
-            return false;
-        }
-        if(!password.length) {
-            toast.error("Password is required.");
-            return false;
-        }
-        if(password !== confirmPassword) {
-            toast.error("Password and confirm password should be same.");
-            return false;
-        }
-        return true;
-    };
+  const validateSignup = () => {
+    if (!email.length) {
+      toast.error("Email is required.");
+      return false;
+    }
+    if (!password.length) {
+      toast.error("Password is required.");
+      return false;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Password and confirm password should be same.");
+      return false;
+    }
+    return true;
+  };
 
-    const handleLogin = async () => {
-        if(validateLogin()) {
-            try {
-                const response = await apiClient.post(LOGIN_ROUTE, {email, password}, {withCredentials:true});
-                if(response.data.user.id) {
-                    setUserInfo(response.data.user);
-                    if(response.data.user.profileSetup) navigate("/chat");
-                    else navigate("/profile");
-                }
-            } catch(error) {
-                console.log("Login error:", error);
-                toast.error("Invalid email or password.");
-            }
-             //console.log({ response });
-        }
-    };
+  const handleLogin = async () => {
+    if (validateLogin()) {
+      try {
+        console.log("Attempting login...");
+        const response = await apiClient.post(
+          LOGIN_ROUTE,
+          { email, password },
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("Login response:", response);
 
-    const handleSignup = async () => {
-        if(validateSignup()) {
-            const response = await apiClient.post(SIGNUP_ROUTE, {email, password},
-            { withCredentials: true }
-            );
-            if(response.status === 201) {
-                navigate("/profile");
-            }
-                // console.log({ response });
+        if (response.data.user?.id) {
+          setUserInfo(response.data.user);
+          if (response.data.user.profileSetup) {
+            navigate("/chat");
+          } else {
+            navigate("/profile");
+          }
+        } else {
+          toast.error("Invalid response from server");
         }
-    };
+      } catch (error) {
+        console.error("Login error:", error);
+        toast.error(error.response?.data || "Invalid email or password.");
+      }
+    }
+  };
+
+  const handleSignup = async () => {
+    if (validateSignup()) {
+      const response = await apiClient.post(
+        SIGNUP_ROUTE,
+        { email, password },
+        { withCredentials: true }
+      );
+      if (response.status === 201) {
+        navigate("/profile");
+      }
+      // console.log({ response });
+    }
+  };
 
   return (
     <div className="h-[100vh] w-[100vw] flex items-center justify-center">
@@ -169,6 +187,6 @@ const Auth = () => {
       </div>
     </div>
   );
-}
+};
 
 export default Auth;

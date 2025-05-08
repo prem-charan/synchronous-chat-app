@@ -17,12 +17,16 @@ const databaseURL = process.env.DATABASE_URL;
 
 // Configure CORS with specific options
 const corsOptions = {
-    origin: true, // Reflects the request origin
+    origin: [
+        'http://localhost:5173',
+        'https://synchronous-chat-app.vercel.app',
+        'https://synchronous-chat-app-frontend.vercel.app'
+    ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    exposedHeaders: ['set-cookie'],
-    preflightContinue: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie'],
+    preflightContinue: false,
     optionsSuccessStatus: 200
 };
 

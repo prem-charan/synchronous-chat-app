@@ -1,12 +1,12 @@
 import axios from "axios";
 import { HOST } from "@/utils/constants";
 
-
+// Create axios instance with default config
 export const apiClient = axios.create({
     baseURL: HOST,
     withCredentials: true,
     validateStatus: function (status) {
-        return status >= 200 && status < 500; // Accept redirects
+        return status >= 200 && status < 500;
     },
     headers: {
         'Content-Type': 'application/json',
@@ -14,27 +14,38 @@ export const apiClient = axios.create({
     }
 });
 
-// response interception for better error handling
+// Debug interceptor to log requests
+apiClient.interceptors.request.use(request => {
+    console.log('Starting Request:', {
+        url: request.url,
+        method: request.method,
+        headers: request.headers,
+        withCredentials: request.withCredentials
+    });
+    return request;
+});
+
+// Debug interceptor to log responses
 apiClient.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        console.log("API Error:", error.response); // Debug API errors
+    response => {
+        console.log('Response:', {
+            status: response.status,
+            headers: response.headers,
+            data: response.data
+        });
+        return response;
+    },
+    error => {
+        console.error('API Error:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            headers: error.response?.headers,
+            config: error.config
+        });
+        
         if (error.response?.status === 401 && window.location.pathname !== '/auth') {
-            // Handle unauthorized error
             window.location.href = '/auth';
         }
-        return Promise.reject(error);
-    }
-);
-
-// Add request interceptor to ensure token is sent
-apiClient.interceptors.request.use(
-    (config) => {
-        // Add additional headers if needed
-        config.withCredentials = true;
-        return config;
-    },
-    (error) => {
         return Promise.reject(error);
     }
 );

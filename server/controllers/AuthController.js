@@ -13,8 +13,7 @@ const cookieOptions = {
     httpOnly: true,
     secure: true,
     sameSite: 'None',
-    path: "/",
-    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+    path: '/',
 };
 
 export const signup = async (request, response, next) => {
