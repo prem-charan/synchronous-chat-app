@@ -157,7 +157,7 @@ const Auth = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
-                  <Button className="rounded-full p-6">Signup</Button>
+                  <Button className="rounded-full p-6 w-full">Signup</Button>
                 </form>
               </TabsContent>
             </Tabs>
