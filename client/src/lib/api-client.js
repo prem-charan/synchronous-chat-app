@@ -10,8 +10,11 @@ export const apiClient = axios.create({
     },
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+    },
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN'
 });
 
 // Debug interceptor to log requests
@@ -23,6 +26,9 @@ apiClient.interceptors.request.use(request => {
         withCredentials: request.withCredentials
     });
     return request;
+}, error => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
 });
 
 // Debug interceptor to log responses
@@ -40,7 +46,8 @@ apiClient.interceptors.response.use(
             status: error.response?.status,
             data: error.response?.data,
             headers: error.response?.headers,
-            config: error.config
+            config: error.config,
+            message: error.message
         });
         
         if (error.response?.status === 401 && window.location.pathname !== '/auth') {

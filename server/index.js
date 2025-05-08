@@ -17,11 +17,24 @@ const databaseURL = process.env.DATABASE_URL;
 
 // Configure CORS with specific options
 const corsOptions = {
-    origin: [
-        'http://localhost:5173',
-        'https://synchronous-chat-app.vercel.app',
-        'https://synchronous-chat-app-frontend.vercel.app'
-    ],
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl requests)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'https://synchronous-chat-app.vercel.app',
+            'https://synchronous-chat-app-frontend.vercel.app',
+            'https://synchronous-chat-app-frontend-virid.vercel.app'
+        ];
+        
+        // Check if the origin is allowed or if it contains vercel.app (for preview deployments)
+        if (allowedOrigins.includes(origin) || origin.includes('vercel.app')) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],

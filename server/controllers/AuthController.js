@@ -14,6 +14,7 @@ const cookieOptions = {
     secure: true,
     sameSite: 'None',
     path: '/',
+    domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
 };
 
 export const signup = async (request, response, next) => {
@@ -179,9 +180,10 @@ export const logout = async (request, response, next) => {
     response.cookie("jwt", "", {
       maxAge: 1,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-      path: "/"
+      secure: true,
+      sameSite: 'None',
+      path: "/",
+      domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
     });
     return response.status(200).send("Logout successfull.");
   } catch (error) {
