@@ -8,13 +8,22 @@ const createToken = (email, userId) => {
     return jwt.sign({email, userId}, process.env.JWT_KEY, {expiresIn: maxAge})
 };
 
-const cookieOptions = {
-    maxAge,
-    httpOnly: true,
-    secure: true,
-    sameSite: 'None',
-    path: '/',
-    domain: process.env.COOKIE_DOMAIN || undefined
+// Create a dynamic cookie options function to handle both production and development
+const getCookieOptions = () => {
+    const options = {
+        maxAge,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'None',
+        path: '/',
+    };
+    
+    // Only add domain if specified in environment
+    if (process.env.COOKIE_DOMAIN && process.env.COOKIE_DOMAIN.trim() !== '') {
+        options.domain = process.env.COOKIE_DOMAIN;
+    }
+    
+    return options;
 };
 
 export const signup = async (request, response, next) => {
@@ -25,7 +34,7 @@ export const signup = async (request, response, next) => {
         }
         const user = await User.create({email, password});
         const token = createToken(email, user.id);
-        response.cookie("jwt", token, cookieOptions);
+        response.cookie("jwt", token, getCookieOptions());
         return response.status(201).json({user:{
             id: user.id,
             email: user.email,
@@ -53,7 +62,7 @@ export const login = async (request, response, next) => {
         return response.status(400).send("Password is incorrect.");
     }
     const token = createToken(email, user.id);
-    response.cookie("jwt", token, cookieOptions);
+    response.cookie("jwt", token, getCookieOptions());
     return response.status(200).json({
       user: {
         id: user.id,
@@ -106,7 +115,7 @@ export const updateProfile = async (request, response, next) => {
 
     // Refresh the token
     const token = createToken(userData.email, userData.id);
-    response.cookie("jwt", token, cookieOptions);
+    response.cookie("jwt", token, getCookieOptions());
     
     return response.status(200).json({
         id: userData.id,
@@ -137,7 +146,7 @@ export const addProfileImage = async (request, response, next) => {
 
     // Refresh the token
     const token = createToken(updatedUser.email, updatedUser.id);
-    response.cookie("jwt", token, cookieOptions);
+    response.cookie("jwt", token, getCookieOptions());
 
     return response.status(200).json({
       image: updatedUser.image,
@@ -166,7 +175,7 @@ export const removeProfileImage = async (request, response, next) => {
 
     // Refresh the token
     const token = createToken(user.email, user.id);
-    response.cookie("jwt", token, cookieOptions);
+    response.cookie("jwt", token, getCookieOptions());
 
     return response.status(200).send("Profile image removed successfully.");
   } catch (error) {
@@ -177,14 +186,10 @@ export const removeProfileImage = async (request, response, next) => {
 
 export const logout = async (request, response, next) => {
   try {
-    response.cookie("jwt", "", {
-      maxAge: 1,
-      httpOnly: true,
-      secure: true,
-      sameSite: 'None',
-      path: "/",
-      domain: process.env.COOKIE_DOMAIN || undefined
-    });
+    const logoutOptions = getCookieOptions();
+    logoutOptions.maxAge = 1;
+    
+    response.cookie("jwt", "", logoutOptions);
     return response.status(200).send("Logout successfull.");
   } catch (error) {
     console.log({ error });
