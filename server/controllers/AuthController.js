@@ -11,10 +11,10 @@ const createToken = (email, userId) => {
 const cookieOptions = {
     maxAge,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    secure: true,
+    sameSite: 'None',
     path: "/",
-    domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
 };
 
 export const signup = async (request, response, next) => {

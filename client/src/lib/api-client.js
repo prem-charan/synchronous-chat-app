@@ -5,7 +5,6 @@ import { HOST } from "@/utils/constants";
 export const apiClient = axios.create({
     baseURL: HOST,
     withCredentials: true,
-    credentials: 'include',
     validateStatus: function (status) {
         return status >= 200 && status < 500; // Accept redirects
     },
@@ -19,6 +18,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
+        console.log("API Error:", error.response); // Debug API errors
         if (error.response?.status === 401 && window.location.pathname !== '/auth') {
             // Handle unauthorized error
             window.location.href = '/auth';
@@ -30,7 +30,8 @@ apiClient.interceptors.response.use(
 // Add request interceptor to ensure token is sent
 apiClient.interceptors.request.use(
     (config) => {
-        // You can add any request preprocessing here
+        // Add additional headers if needed
+        config.withCredentials = true;
         return config;
     },
     (error) => {

@@ -17,7 +17,7 @@ const databaseURL = process.env.DATABASE_URL;
 
 // Configure CORS with specific options
 const corsOptions = {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: true, // Reflects the request origin
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
