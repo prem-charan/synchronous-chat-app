@@ -61,8 +61,15 @@ export const login = async (request, response, next) => {
     if(!auth) {
         return response.status(400).send("Password is incorrect.");
     }
+    
+    // Create token and set cookie
     const token = createToken(email, user.id);
-    response.cookie("jwt", token, getCookieOptions());
+    const cookieOpts = getCookieOptions();
+    
+    // Log cookie setup details
+    console.log("Setting cookie with options:", cookieOpts);
+    response.cookie("jwt", token, cookieOpts);
+    
     return response.status(200).json({
       user: {
         id: user.id,
