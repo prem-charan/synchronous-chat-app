@@ -8,6 +8,15 @@ const createToken = (email, userId) => {
     return jwt.sign({email, userId}, process.env.JWT_KEY, {expiresIn: maxAge})
 };
 
+const cookieOptions = {
+    maxAge,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    path: "/",
+    domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined
+};
+
 export const signup = async (request, response, next) => {
     try {
         const {email, password } = request.body;
@@ -15,14 +24,8 @@ export const signup = async (request, response, next) => {
             return response.status(400).send("Email and Password is required.")
         }
         const user = await User.create({email, password});
-        response.cookie("jwt", createToken(email, user.id), {
-            maxAge,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-            path: "/",
-            httpOnly: true,
-            domain: process.env.COOKIE_DOMAIN || undefined,
-        });
+        const token = createToken(email, user.id);
+        response.cookie("jwt", token, cookieOptions);
         return response.status(201).json({user:{
             id: user.id,
             email: user.email,
@@ -50,14 +53,7 @@ export const login = async (request, response, next) => {
         return response.status(400).send("Password is incorrect.");
     }
     const token = createToken(email, user.id);
-    response.cookie("jwt", token, {
-      maxAge,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-      path: "/",
-      httpOnly: true,
-      domain: process.env.COOKIE_DOMAIN || undefined,
-    });
+    response.cookie("jwt", token, cookieOptions);
     return response.status(200).json({
       user: {
         id: user.id,
@@ -108,6 +104,9 @@ export const updateProfile = async (request, response, next) => {
       firstName, lastName, color, profileSetup:true
     }, {new: true, runValidators: true});
 
+    // Refresh the token
+    const token = createToken(userData.email, userData.id);
+    response.cookie("jwt", token, cookieOptions);
     
     return response.status(200).json({
         id: userData.id,
@@ -136,6 +135,10 @@ export const addProfileImage = async (request, response, next) => {
 
     const updatedUser = await User.findByIdAndUpdate(request.userId, {image: fileName}, {new: true, runValidators: true});
 
+    // Refresh the token
+    const token = createToken(updatedUser.email, updatedUser.id);
+    response.cookie("jwt", token, cookieOptions);
+
     return response.status(200).json({
       image: updatedUser.image,
     });
@@ -161,6 +164,10 @@ export const removeProfileImage = async (request, response, next) => {
     user.image = null;
     await user.save();
 
+    // Refresh the token
+    const token = createToken(user.email, user.id);
+    response.cookie("jwt", token, cookieOptions);
+
     return response.status(200).send("Profile image removed successfully.");
   } catch (error) {
     console.log({ error });
@@ -170,8 +177,13 @@ export const removeProfileImage = async (request, response, next) => {
 
 export const logout = async (request, response, next) => {
   try {
-
-    response.cookie("jwt", "", {maxAge:1, secure: false, sameSite: "Lax", path: "/"});
+    response.cookie("jwt", "", {
+      maxAge: 1,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      path: "/"
+    });
     return response.status(200).send("Logout successfull.");
   } catch (error) {
     console.log({ error });

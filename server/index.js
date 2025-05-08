@@ -15,20 +15,23 @@ const app = express();
 const port = process.env.PORT || 3001;
 const databaseURL = process.env.DATABASE_URL;
 
-app.use(
-    cors({
+// Configure CORS with specific options
+const corsOptions = {
     origin: process.env.CLIENT_URL || "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
-    })
-);
+    exposedHeaders: ['set-cookie'],
+    preflightContinue: true,
+    optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.use(cookieParser());
+app.use(express.json());
 
 app.use("/uploads/profiles", express.static("uploads/profiles"));
 app.use("/uploads/files", express.static("uploads/files"));
-
-app.use(cookieParser());
-app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/contacts", contactsRoutes);
