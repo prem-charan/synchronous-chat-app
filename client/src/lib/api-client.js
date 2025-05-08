@@ -1,6 +1,8 @@
 import axios from "axios";
 import { HOST } from "@/utils/constants";
 
+console.log('API Client using HOST:', HOST);
+
 // Create axios instance with default config
 export const apiClient = axios.create({
     baseURL: HOST,
@@ -10,8 +12,7 @@ export const apiClient = axios.create({
     },
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Accept': 'application/json'
     },
     xsrfCookieName: 'XSRF-TOKEN',
     xsrfHeaderName: 'X-XSRF-TOKEN'
@@ -23,7 +24,8 @@ apiClient.interceptors.request.use(request => {
         url: request.url,
         method: request.method,
         headers: request.headers,
-        withCredentials: request.withCredentials
+        withCredentials: request.withCredentials,
+        baseURL: request.baseURL
     });
     return request;
 }, error => {

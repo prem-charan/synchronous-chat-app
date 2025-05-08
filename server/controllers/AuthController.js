@@ -14,7 +14,7 @@ const cookieOptions = {
     secure: true,
     sameSite: 'None',
     path: '/',
-    domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
+    domain: process.env.COOKIE_DOMAIN || undefined
 };
 
 export const signup = async (request, response, next) => {
@@ -183,7 +183,7 @@ export const logout = async (request, response, next) => {
       secure: true,
       sameSite: 'None',
       path: "/",
-      domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost'
+      domain: process.env.COOKIE_DOMAIN || undefined
     });
     return response.status(200).send("Logout successfull.");
   } catch (error) {
