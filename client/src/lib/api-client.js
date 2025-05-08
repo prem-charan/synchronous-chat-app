@@ -5,8 +5,8 @@ import { HOST } from "@/utils/constants";
 export const apiClient = axios.create({
     baseURL: HOST,
     withCredentials: true,
-    headers: {
-        'Content-Type': 'application/json',
+    validateStatus: function (status) {
+        return status >= 200 && status < 500; // Accept redirects
     }
 });
 

@@ -81,6 +81,9 @@ const MessageBar = () => {
         setIsUploading(true);
         const response = await apiClient.post(UPLOAD_FILE_ROUTE, formData, {
           withCredentials: true,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
           onUploadProgress: (data) => {
             setFileUploadProgress(Math.round((100 * data.loaded) / data.total));
           },
@@ -88,6 +91,7 @@ const MessageBar = () => {
 
         if (response.status === 200 && response.data) {
           setIsUploading(false);
+          setFileUploadProgress(0);
           if (selectedChatType === "contact") {
             socket.emit("sendMessage", {
               sender: userInfo.id,
@@ -105,12 +109,19 @@ const MessageBar = () => {
               channelId: selectedChatData._id,
             });
           }
+        } else {
+          throw new Error("File upload failed");
         }
       }
       console.log({ file });
     } catch (error) {
       setIsUploading(false);
-      console.log(error);
+      setFileUploadProgress(0);
+      console.log('File upload error:', error);
+    } finally {
+      if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 

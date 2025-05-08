@@ -63,10 +63,12 @@ export const SocketProvider = ({ children }) => {
     socket.current = io(HOST, {
       withCredentials: true,
       query: { userId: userInfo.id },
+      transports: ["websocket", "polling"],
+      autoConnect: true,
     });
 
     socket.current.on("connect", () => {
-    //   console.log("Connected to socket server with ID:", socket.current.id);
+      //   console.log("Connected to socket server with ID:", socket.current.id);
     });
 
     socket.current.on("receiveMessage", handleReceiveMessage);
