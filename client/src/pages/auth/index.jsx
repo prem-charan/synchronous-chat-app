@@ -12,7 +12,7 @@ import { useAppStore } from "@/store";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { setUserInfo } = useAppStore();
+  const { setUserInfo, setToken } = useAppStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -62,7 +62,12 @@ const Auth = () => {
         console.log("Login response:", response);
 
         if (response.data.user?.id) {
+          if (response.data.token) {
+            setToken(response.data.token);
+          }
+
           setUserInfo(response.data.user);
+
           if (response.data.user.profileSetup) {
             navigate("/chat");
           } else {

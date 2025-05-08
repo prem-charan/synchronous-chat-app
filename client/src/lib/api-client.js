@@ -18,6 +18,16 @@ export const apiClient = axios.create({
     xsrfHeaderName: 'X-XSRF-TOKEN'
 });
 
+// Add auth token to requests
+apiClient.interceptors.request.use(config => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+        config.headers['x-auth-token'] = token;
+    }
+    return config;
+});
+
 // Debug interceptor to log requests
 apiClient.interceptors.request.use(request => {
     console.log('Starting Request:', {
@@ -53,6 +63,7 @@ apiClient.interceptors.response.use(
         });
         
         if (error.response?.status === 401 && window.location.pathname !== '/auth') {
+            localStorage.removeItem('auth_token');
             window.location.href = '/auth';
         }
         return Promise.reject(error);

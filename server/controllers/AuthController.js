@@ -71,6 +71,7 @@ export const login = async (request, response, next) => {
     response.cookie("jwt", token, cookieOpts);
     
     return response.status(200).json({
+      token,
       user: {
         id: user.id,
         email: user.email,
