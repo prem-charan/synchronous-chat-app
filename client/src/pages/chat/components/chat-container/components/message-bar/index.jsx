@@ -98,14 +98,14 @@ const MessageBar = () => {
               content: undefined,
               recipient: selectedChatData._id,
               messageType: "file",
-              fileUrl: response.data.filePath,
+              fileUrl: response.data.fileUrl,
             });
           } else if (selectedChatType === "channel") {
             socket.emit("send-channel-message", {
               sender: userInfo.id,
               content: undefined,
               messageType: "file",
-              fileUrl: response.data.filePath,
+              fileUrl: response.data.fileUrl,
               channelId: selectedChatData._id,
             });
           }
@@ -117,9 +117,9 @@ const MessageBar = () => {
     } catch (error) {
       setIsUploading(false);
       setFileUploadProgress(0);
-      console.log('File upload error:', error);
+      console.log("File upload error:", error);
     } finally {
-      if(fileInputRef.current) {
+      if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }

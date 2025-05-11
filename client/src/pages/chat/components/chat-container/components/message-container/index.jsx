@@ -176,7 +176,7 @@ const MessageContainer = () => {
               }}
             >
               <img
-                src={`${HOST}/${message.fileUrl}`}
+                src={message.fileUrl}
                 height={300}
                 width={300}
                 alt="Shared file"
@@ -241,7 +241,7 @@ const MessageContainer = () => {
                 }}
               >
                 <img
-                  src={`${HOST}/${message.fileUrl}`}
+                  src={message.fileUrl}
                   height={300}
                   width={300}
                   alt="Shared file"
@@ -268,22 +268,23 @@ const MessageContainer = () => {
         {message.sender._id !== userInfo.id ? (
           <div className="flex items-center justify-start gap-3">
             <Avatar className="h-8 w-8 rounded-full overflow-hidden">
-              {message.sender.image && (
+              {message.sender.image ? (
                 <AvatarImage
-                  src={`${HOST}/${message.sender.image}`}
+                  src={message.sender.image}
                   alt="profile"
                   className="object-cover w-full h-full bg-black"
                 />
+              ) : (
+                <div
+                  className={`uppercase h-8 w-8 text-sm border-[1px] flex items-center justify-center rounded-full ${getColor(
+                    message.sender.color
+                  )}`}
+                >
+                  {message.sender.firstName
+                    ? message.sender.firstName.split("").shift()
+                    : message.sender.email.split("").shift()}
+                </div>
               )}
-              <AvatarFallback
-                className={`uppercase h-8 w-8 text-lg flex items-center justify-center rounded-full ${getColor(
-                  message.sender.color
-                )}`}
-              >
-                {message.sender.firstName
-                  ? message.sender.firstName.split("").shift()
-                  : message.sender.email.split("").shift()}
-              </AvatarFallback>
             </Avatar>
             <div className="text-sm text-gray-600">
               {message.sender.firstName} {message.sender.lastName}
@@ -311,7 +312,7 @@ const MessageContainer = () => {
             <div className="fixed z-[1000] top-0 left-0 h-[100vh] w-[100vw] flex items-center justify-center backdrop-blur-lg flex-col">
               <div>
                 <img
-                  src={`${HOST}/${imageURL}`}
+                  src={imageURL}
                   className="h-[80vh] w-full bg-cover"
                   alt="Preview"
                   onError={handleImageError}

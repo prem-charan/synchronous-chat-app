@@ -1,38 +1,36 @@
-import Message from "../models/MessagesModel.js";
-import { cloudinary } from "../config/cloudinary.js";
+import Message from "../models/Message.js";
+import cloudinary from "../config/cloudinary.js";
 
-export const getMessages = async (request, response, next) => {
+export const getMessages = async (request, response) => {
   try {
-    const { id } = request.body;
+    const { senderId, recipientId } = request.body;
     const messages = await Message.find({
       $or: [
-        { sender: request.userId, recipient: id },
-        { sender: id, recipient: request.userId },
+        { sender: senderId, recipient: recipientId },
+        { sender: recipientId, recipient: senderId },
       ],
     })
       .populate("sender", "firstName lastName email image color")
       .populate("recipient", "firstName lastName email image color")
-      .sort({ timestamp: 1 });
+      .sort({ createdAt: 1 });
 
-    return response.status(200).json({ messages });
+    response.status(200).json(messages);
   } catch (error) {
-    console.log({ error });
-    return response.status(500).send("Internal Server Error");
+    response.status(500).json({ message: error.message });
   }
 };
 
-export const uploadFile = async (request, response, next) => {
+export const uploadFile = async (request, response) => {
   try {
-    if(!request.file) {
-      return response.status(400).send("File is required.");
+    if (!request.file) {
+      return response.status(400).json({ message: "No file uploaded" });
     }
-    
-    // The file URL is already provided by Cloudinary
+
+    // The file URL is already provided by Cloudinary in request.file.path
     const fileUrl = request.file.path;
 
-    return response.status(200).json({ filePath: fileUrl });
+    response.status(200).json({ fileUrl });
   } catch (error) {
-    console.log({ error });
-    return response.status(500).send("Internal Server Error");
+    response.status(500).json({ message: error.message });
   }
 };

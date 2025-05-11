@@ -171,94 +171,56 @@ export const updateProfile = async (request, response, next) => {
   }
 };
 
-export const addProfileImage = async (request, response, next) => {
+export const addProfileImage = async (request, response) => {
   try {
-    const { userId } = request;
-    const file = request.file;
-
-    if (!file) {
-      return response.status(400).json({
-        message: "No file uploaded",
-        success: false
-      });
+    if (!request.file) {
+      return response.status(400).json({ message: "No image uploaded" });
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findById(request.userId);
     if (!user) {
-      return response.status(404).json({
-        message: "User not found",
-        success: false
-      });
+      return response.status(404).json({ message: "User not found" });
     }
 
-    // Delete old image from Cloudinary if exists
+    // Delete old image from Cloudinary if it exists
     if (user.image) {
-      try {
-        const publicId = user.image.split('/').pop().split('.')[0];
-        await cloudinary.uploader.destroy(publicId);
-      } catch (error) {
-        console.error("Error deleting old image:", error);
-      }
+      const publicId = user.image.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(publicId);
     }
 
-    // Update user with new image URL from Cloudinary
-    user.image = file.path;
+    // Update user with new Cloudinary URL
+    user.image = request.file.path;
     await user.save();
 
-    return response.status(200).json({
-      success: true,
+    response.status(200).json({ 
       message: "Profile image updated successfully",
-      image: file.path
+      image: user.image 
     });
   } catch (error) {
-    console.error("Add profile image error:", error);
-    return response.status(500).json({
-      message: "Internal Server Error",
-      success: false
-    });
+    response.status(500).json({ message: error.message });
   }
 };
 
-export const removeProfileImage = async (request, response, next) => {
+export const removeProfileImage = async (request, response) => {
   try {
-    const { userId } = request;
-    const user = await User.findById(userId);
-
+    const user = await User.findById(request.userId);
     if (!user) {
-      return response.status(404).json({
-        message: "User not found",
-        success: false
-      });
+      return response.status(404).json({ message: "User not found" });
     }
 
-    if (!user.image) {
-      return response.status(400).json({
-        message: "No profile image to remove",
-        success: false
-      });
-    }
-
-    // Delete image from Cloudinary
-    try {
+    if (user.image) {
+      // Delete image from Cloudinary
       const publicId = user.image.split('/').pop().split('.')[0];
       await cloudinary.uploader.destroy(publicId);
-    } catch (error) {
-      console.error("Error deleting image from Cloudinary:", error);
+      
+      // Remove image URL from user document
+      user.image = null;
+      await user.save();
     }
 
-    user.image = null;
-    await user.save();
-
-    return response.status(200).json({
-      success: true,
-      message: "Profile image removed successfully"
-    });
+    response.status(200).json({ message: "Profile image removed successfully" });
   } catch (error) {
-    console.error("Remove profile image error:", error);
-    return response.status(500).json({
-      message: "Internal Server Error",
-      success: false
-    });
+    response.status(500).json({ message: error.message });
   }
 };
 
