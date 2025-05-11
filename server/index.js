@@ -11,6 +11,7 @@ import contactsRoutes from "./routes/ContactRoutes.js";
 import setupSocket from "./socket.js";
 import messagesRoutes from "./routes/MessagesRoutes.js";
 import channelRoutes from "./routes/ChannelRoutes.js";
+import { profileStorage, fileStorage } from "./config/cloudinary.js";
 
 dotenv.config();
 
@@ -18,26 +19,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configure multer for file uploads
-const profileStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'uploads/profiles'));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const fileStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'uploads/files'));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
 const profileUpload = multer({ 
   storage: profileStorage,
   limits: {
@@ -94,18 +75,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
-
-// Create uploads directories if they don't exist
-import { mkdirSync } from 'fs';
-try {
-  mkdirSync(path.join(__dirname, 'uploads/profiles'), { recursive: true });
-  mkdirSync(path.join(__dirname, 'uploads/files'), { recursive: true });
-} catch (error) {
-  console.error('Error creating upload directories:', error);
-}
-
-// Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Error handling middleware for multer
 app.use((err, req, res, next) => {

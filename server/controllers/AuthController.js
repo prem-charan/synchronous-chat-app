@@ -1,10 +1,8 @@
 import jwt from "jsonwebtoken";
 import User from "../models/UserModel.js";
 import { compare } from "bcrypt";
-import { renameSync, unlinkSync } from "fs";
-import { existsSync } from "fs";
-import path from "path";
-import fs from "fs/promises";
+import { cloudinary } from "../config/cloudinary.js";
+
 const maxAge = 3 * 24 * 60 * 60 * 1000;
 
 const createToken = (email, userId) => {
@@ -193,24 +191,24 @@ export const addProfileImage = async (request, response, next) => {
       });
     }
 
-    // Delete old image if exists
+    // Delete old image from Cloudinary if exists
     if (user.image) {
-      const oldImagePath = path.join(process.cwd(), 'uploads', user.image);
       try {
-        await fs.unlink(oldImagePath);
+        const publicId = user.image.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
       } catch (error) {
         console.error("Error deleting old image:", error);
       }
     }
 
-    // Update user with new image
-    user.image = file.filename;
+    // Update user with new image URL from Cloudinary
+    user.image = file.path;
     await user.save();
 
     return response.status(200).json({
       success: true,
       message: "Profile image updated successfully",
-      image: file.filename
+      image: file.path
     });
   } catch (error) {
     console.error("Add profile image error:", error);
@@ -240,11 +238,12 @@ export const removeProfileImage = async (request, response, next) => {
       });
     }
 
-    const imagePath = path.join(process.cwd(), 'uploads', user.image);
+    // Delete image from Cloudinary
     try {
-      await fs.unlink(imagePath);
+      const publicId = user.image.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(publicId);
     } catch (error) {
-      console.error("Error deleting image file:", error);
+      console.error("Error deleting image from Cloudinary:", error);
     }
 
     user.image = null;
