@@ -8,7 +8,7 @@ import {
   useCallback,
 } from "react";
 import { io } from "socket.io-client";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 
 const SocketContext = createContext(null);
 
