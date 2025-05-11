@@ -1,6 +1,10 @@
 import { apiClient } from "@/lib/api-client";
 import { useAppStore } from "@/store";
-import { GET_ALL_MESSAGES_ROUTE, GET_CHANNEL_MESSAGES, HOST } from "@/utils/constants";
+import {
+  GET_ALL_MESSAGES_ROUTE,
+  GET_CHANNEL_MESSAGES,
+  HOST,
+} from "@/utils/constants";
 import moment from "moment";
 import { useEffect, useRef, useState } from "react";
 import { MdFolderZip } from "react-icons/md";
@@ -8,6 +12,7 @@ import { IoMdArrowRoundDown } from "react-icons/io";
 import { IoCloseSharp } from "react-icons/io5";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getColor } from "@/lib/utils";
+import { toast } from "sonner";
 
 const MessageContainer = () => {
   const scrollRef = useRef();
@@ -23,10 +28,13 @@ const MessageContainer = () => {
 
   const [showImage, setShowImage] = useState(false);
   const [imageURL, setImageURL] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   useEffect(() => {
     const getMessages = async () => {
       try {
+        setIsLoading(true);
         const response = await apiClient.post(
           GET_ALL_MESSAGES_ROUTE,
           { id: selectedChatData._id },
@@ -36,12 +44,16 @@ const MessageContainer = () => {
           setSelectedChatMessages(response.data.messages);
         }
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching messages:", error);
+        toast.error("Failed to load messages. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
     const getChannelMessages = async () => {
       try {
+        setIsLoading(true);
         const response = await apiClient.get(
           `${GET_CHANNEL_MESSAGES}/${selectedChatData._id}`,
           { withCredentials: true }
@@ -50,7 +62,10 @@ const MessageContainer = () => {
           setSelectedChatMessages(response.data.messages);
         }
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching channel messages:", error);
+        toast.error("Failed to load channel messages. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -70,6 +85,11 @@ const MessageContainer = () => {
     const imageRegex =
       /\.(jpg|jpeg|png|gif|bmp|tiff|tif|webp|svg|ico|heic|heif)$/i;
     return imageRegex.test(filePath);
+  };
+
+  const handleImageError = () => {
+    setImageLoadError(true);
+    toast.error("Failed to load image. Please try again.");
   };
 
   const renderMessages = () => {
@@ -93,26 +113,33 @@ const MessageContainer = () => {
   };
 
   const downloadFile = async (file) => {
-    setIsDownloading(true);
-    setFileDownloadProgress(0);
-    const response = await apiClient.get(`${HOST}/${file}`, {
-      responseType: "blob",
-      onDownloadProgress: (ProgressEvent) => {
-        const { loaded, total } = ProgressEvent;
-        const percentCompleted = Math.round((loaded * 100) / total);
-        setFileDownloadProgress(percentCompleted);
-      },
-    });
-    const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
-    link.href = urlBlob;
-    link.setAttribute("download", file.split("/").pop());
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(urlBlob);
-    setIsDownloading(false);
-    setFileDownloadProgress(0);
+    try {
+      setIsDownloading(true);
+      setFileDownloadProgress(0);
+      const response = await apiClient.get(`${HOST}/uploads/files/${file}`, {
+        responseType: "blob",
+        onDownloadProgress: (ProgressEvent) => {
+          const { loaded, total } = ProgressEvent;
+          const percentCompleted = Math.round((loaded * 100) / total);
+          setFileDownloadProgress(percentCompleted);
+        },
+      });
+      const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = urlBlob;
+      link.setAttribute("download", file.split("/").pop());
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(urlBlob);
+      toast.success("File downloaded successfully");
+    } catch (error) {
+      console.error("File download error:", error);
+      toast.error("Failed to download file. Please try again.");
+    } finally {
+      setIsDownloading(false);
+      setFileDownloadProgress(0);
+    }
   };
 
   const renderDMMessages = (message) => (
@@ -149,9 +176,12 @@ const MessageContainer = () => {
               }}
             >
               <img
-                src={`${HOST}/${message.fileUrl}`}
+                src={`${HOST}/uploads/files/${message.fileUrl}`}
                 height={300}
                 width={300}
+                alt="Shared file"
+                className="max-w-full h-auto rounded"
+                onError={handleImageError}
               />
             </div>
           ) : (
@@ -211,9 +241,12 @@ const MessageContainer = () => {
                 }}
               >
                 <img
-                  src={`${HOST}/${message.fileUrl}`}
+                  src={`${HOST}/uploads/files/${message.fileUrl}`}
                   height={300}
                   width={300}
+                  alt="Shared file"
+                  className="max-w-full h-auto rounded"
+                  onError={handleImageError}
                 />
               </div>
             ) : (
@@ -237,7 +270,7 @@ const MessageContainer = () => {
             <Avatar className="h-8 w-8 rounded-full overflow-hidden">
               {message.sender.image && (
                 <AvatarImage
-                  src={`${HOST}/${message.sender.image}`}
+                  src={`${HOST}/uploads/profiles/${message.sender.image}`}
                   alt="profile"
                   className="object-cover w-full h-full bg-black"
                 />
@@ -252,50 +285,59 @@ const MessageContainer = () => {
                   : message.sender.email.split("").shift()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm text-white/60">{`${message.sender.firstName} ${message.sender.lastName}`}</span>
-            <span className="text-xs text-white/60">
-              {moment(message.timestamp).format("LT")}
-            </span>
+            <div className="text-sm text-gray-600">
+              {message.sender.firstName} {message.sender.lastName}
+            </div>
           </div>
-        ) : (
-          <div className="text-xs text-white/60 mt-1">
-            {moment(message.timestamp).format("LT")}
-          </div>
-        )}
+        ) : null}
+        <div className="text-xs text-gray-600">
+          {moment(message.timestamp).format("LT")}
+        </div>
       </div>
     );
   };
 
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hidden p-4 px-8 md:w-[65vw] lg:w-[70vw] xl:w-[80vw] w-full">
-      {renderMessages()}
-      <div ref={scrollRef} />
-      {showImage && (
-        <div className="fixed z-[1000] top-0 left-0 h-[100vh] w-[100vw] flex items-center justify-center backdrop-blur-lg flex-col">
-          <div>
-            <img
-              src={`${HOST}/${imageURL}`}
-              className="h-[80vh] w-full bg-cover"
-            />
-          </div>
-          <div className="flex gap-5 fixed top-0 mt-5">
-            <button
-              className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300"
-              onClick={() => downloadFile(imageURL)}
-            >
-              <IoMdArrowRoundDown />
-            </button>
-            <button
-              className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300"
-              onClick={() => {
-                setShowImage(false);
-                setImageURL(null);
-              }}
-            >
-              <IoCloseSharp />
-            </button>
-          </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
         </div>
+      ) : (
+        <>
+          {renderMessages()}
+          <div ref={scrollRef} />
+          {showImage && (
+            <div className="fixed z-[1000] top-0 left-0 h-[100vh] w-[100vw] flex items-center justify-center backdrop-blur-lg flex-col">
+              <div>
+                <img
+                  src={`${HOST}/uploads/files/${imageURL}`}
+                  className="h-[80vh] w-full bg-cover"
+                  alt="Preview"
+                  onError={handleImageError}
+                />
+              </div>
+              <div className="flex gap-5 fixed top-0 mt-5">
+                <button
+                  className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300"
+                  onClick={() => downloadFile(imageURL)}
+                >
+                  <IoMdArrowRoundDown />
+                </button>
+                <button
+                  className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300"
+                  onClick={() => {
+                    setShowImage(false);
+                    setImageURL(null);
+                    setImageLoadError(false);
+                  }}
+                >
+                  <IoCloseSharp />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

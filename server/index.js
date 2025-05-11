@@ -18,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
+const profileStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.join(__dirname, 'uploads/profiles'));
   },
@@ -28,8 +28,18 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
-  storage: storage,
+const fileStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, 'uploads/files'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const profileUpload = multer({ 
+  storage: profileStorage,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
@@ -40,6 +50,13 @@ const upload = multer({
     } else {
       cb(new Error('Invalid file type. Only JPEG, PNG, GIF and WebP are allowed.'));
     }
+  }
+});
+
+const fileUpload = multer({ 
+  storage: fileStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
   }
 });
 
@@ -87,8 +104,8 @@ try {
   console.error('Error creating upload directories:', error);
 }
 
-app.use("/uploads/profiles", express.static(path.join(__dirname, "uploads/profiles")));
-app.use("/uploads/files", express.static(path.join(__dirname, "uploads/files")));
+// Serve static files from uploads directory
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Error handling middleware for multer
 app.use((err, req, res, next) => {
@@ -123,6 +140,6 @@ mongoose
     .then(() => console.log('DB Connection Successfull!'))
     .catch((err) => console.log(err.message));
 
-export { upload };
+export { profileUpload, fileUpload };
 
 // test

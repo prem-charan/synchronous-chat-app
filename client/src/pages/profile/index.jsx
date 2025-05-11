@@ -34,7 +34,7 @@ const Profile = () => {
       setSelectedColor(userInfo.color);
     }
     if (userInfo.image) {
-      setImage(`${HOST}/${userInfo.image}`);
+      setImage(`${HOST}/uploads/profiles/${userInfo.image}`);
     }
   }, [userInfo]);
 
@@ -116,7 +116,7 @@ const Profile = () => {
 
       if (response.data.success && response.data.image) {
         setUserInfo({ ...userInfo, image: response.data.image });
-        setImage(`${HOST}/${response.data.image}`);
+        setImage(`${HOST}/uploads/profiles/${response.data.image}`);
         toast.success("Profile image updated successfully");
       } else {
         throw new Error(
