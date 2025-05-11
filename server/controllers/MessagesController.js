@@ -1,4 +1,4 @@
-import Message from "../models/Message.js";
+import Message from "../models/MessagesModel.js";
 import cloudinary from "../config/cloudinary.js";
 
 export const getMessages = async (request, response) => {
