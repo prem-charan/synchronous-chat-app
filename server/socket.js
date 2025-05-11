@@ -5,10 +5,23 @@ import Channel from "./models/ChannelModel.js";
 const setupSocket = (server) => {
   const io = new SocketIOServer(server, {
     cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:5173",
-      methods: ["GET", "POST"],
+      origin: function(origin, callback) {
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = process.env.NODE_ENV === 'production' 
+            ? [process.env.CLIENT_URL]
+            : ['http://localhost:5173', process.env.CLIENT_URL];
+        
+        if (allowedOrigins.includes(origin) || origin.includes('vercel.app')) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       credentials: true,
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'x-auth-token', 'Accept'],
+      exposedHeaders: ['Set-Cookie']
     },
   });
 

@@ -21,16 +21,9 @@ const corsOptions = {
         // Allow requests with no origin (like mobile apps, curl requests)
         if (!origin) return callback(null, true);
         
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-        
-        const allowedOrigins = [
-            'http://localhost:5173',
-            'https://synchronous-chat-app.vercel.app',
-            'https://synchronous-chat-app-frontend.vercel.app',
-            'https://synchronous-chat-app-frontend-virid.vercel.app',
-            'https://synchronous-chat-app-three.vercel.app',
-            process.env.CLIENT_URL
-        ];
+        const allowedOrigins = process.env.NODE_ENV === 'production' 
+            ? [process.env.CLIENT_URL]
+            : ['http://localhost:5173', process.env.CLIENT_URL];
         
         // Check if the origin is allowed or if it contains vercel.app (for preview deployments)
         console.log(`Checking CORS for origin: ${origin}`);
@@ -41,12 +34,12 @@ const corsOptions = {
             callback(new Error('Not allowed by CORS'));
         }
     },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'x-auth-token', 'Accept'],
     exposedHeaders: ['Set-Cookie'],
     preflightContinue: false,
-    optionsSuccessStatus: 200
+    optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));

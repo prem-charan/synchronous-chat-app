@@ -2,6 +2,11 @@ import jwt from 'jsonwebtoken'
 
 export const verifyToken = (request, response, next) => {
     try {
+        // Skip token verification for login and signup routes
+        if (request.path === '/api/auth/login' || request.path === '/api/auth/signup') {
+            return next();
+        }
+
         console.log("Auth Headers:", request.headers);
         console.log("Auth Cookies:", request.cookies);
         
@@ -33,13 +38,13 @@ export const verifyToken = (request, response, next) => {
 
         if (!token) {
             console.log("No token found in any source");
-            return response.status(401).send("You are not authenticated!");
+            return response.status(401).json({ message: "You are not authenticated!" });
         }
 
         jwt.verify(token, process.env.JWT_KEY, (err, payload) => {
             if (err) {
                 console.log("Token verification error:", err);
-                return response.status(403).send("Token is not valid!");
+                return response.status(403).json({ message: "Token is not valid!" });
             }
 
             console.log("Token verified successfully. Payload:", payload);
@@ -48,6 +53,6 @@ export const verifyToken = (request, response, next) => {
         });
     } catch (error) {
         console.error("Auth middleware error:", error);
-        return response.status(500).send("Authentication error");
+        return response.status(500).json({ message: "Authentication error" });
     }
 };

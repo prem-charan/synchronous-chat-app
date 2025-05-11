@@ -68,10 +68,17 @@ export const SocketProvider = ({ children }) => {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      extraHeaders: {
+        "x-auth-token": localStorage.getItem("auth_token"),
+      },
     });
 
     socket.current.on("connect", () => {
-      //   console.log("Connected to socket server with ID:", socket.current.id);
+      console.log("Socket connected successfully");
+    });
+
+    socket.current.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
     });
 
     socket.current.on("receiveMessage", handleReceiveMessage);

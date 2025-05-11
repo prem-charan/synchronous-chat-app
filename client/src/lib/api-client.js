@@ -30,13 +30,16 @@ apiClient.interceptors.request.use(config => {
 
 // Debug interceptor to log requests
 apiClient.interceptors.request.use(request => {
-    console.log('Starting Request:', {
-        url: request.url,
-        method: request.method,
-        headers: request.headers,
-        withCredentials: request.withCredentials,
-        baseURL: request.baseURL
-    });
+    // Only log non-user-info requests to reduce noise
+    if (!request.url.includes('user-info')) {
+        console.log('Starting Request:', {
+            url: request.url,
+            method: request.method,
+            headers: request.headers,
+            withCredentials: request.withCredentials,
+            baseURL: request.baseURL
+        });
+    }
     return request;
 }, error => {
     console.error('Request error:', error);
@@ -46,21 +49,27 @@ apiClient.interceptors.request.use(request => {
 // Debug interceptor to log responses
 apiClient.interceptors.response.use(
     response => {
-        console.log('Response:', {
-            status: response.status,
-            headers: response.headers,
-            data: response.data
-        });
+        // Only log non-user-info responses to reduce noise
+        if (!response.config.url.includes('user-info')) {
+            console.log('Response:', {
+                status: response.status,
+                headers: response.headers,
+                data: response.data
+            });
+        }
         return response;
     },
     error => {
-        console.error('API Error:', {
-            status: error.response?.status,
-            data: error.response?.data,
-            headers: error.response?.headers,
-            config: error.config,
-            message: error.message
-        });
+        // Don't log network errors for user-info requests
+        if (!error.config?.url?.includes('user-info')) {
+            console.error('API Error:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                headers: error.response?.headers,
+                config: error.config,
+                message: error.message
+            });
+        }
         
         if (error.response?.status === 401 && window.location.pathname !== '/auth') {
             localStorage.removeItem('auth_token');
