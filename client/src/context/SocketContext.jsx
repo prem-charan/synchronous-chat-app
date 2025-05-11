@@ -94,55 +94,59 @@ export const SocketProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (!userInfo?.id) return;
+    if (userInfo) {
+      socket.current = io(HOST, {
+        withCredentials: true,
+        query: { userId: userInfo.id },
+        transports: ["websocket", "polling"],
+        autoConnect: true,
+        reconnection: true,
+        reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 10000,
+        timeout: 10000,
+        extraHeaders: {
+          "x-auth-token": localStorage.getItem("auth_token"),
+        },
+      });
 
-    socket.current = io(HOST, {
-      withCredentials: true,
-      query: { userId: userInfo.id },
-      transports: ["websocket", "polling"],
-      autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 10000,
-      timeout: 10000,
-      extraHeaders: {
-        "x-auth-token": localStorage.getItem("auth_token"),
-      },
-    });
+      socket.current.on("connect", () => {
+        console.log("Connected to chat server");
+      });
 
-    socket.current.on("connect", () => {
-      console.log("Socket connected successfully");
-      reconnectAttempts.current = 0;
-      toast.success("Connected to chat server");
-    });
+      socket.current.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
+        toast.error("Failed to connect to chat server. Please try again.");
+      });
 
-    socket.current.on("connect_error", handleError);
-    socket.current.on("error", handleError);
-    socket.current.on("disconnect", handleDisconnect);
-    socket.current.on("receiveMessage", handleReceiveMessage);
-    socket.current.on("receive-channel-message", handleReceiveChannelMessage);
+      socket.current.on("disconnect", (reason) => {
+        console.log("Disconnected from chat server:", reason);
+        if (reason === "io server disconnect") {
+          toast.error(
+            "Disconnected from chat server. Please refresh the page."
+          );
+        }
+      });
 
-    return () => {
-      if (socket.current) {
-        socket.current.off("connect_error", handleError);
-        socket.current.off("error", handleError);
-        socket.current.off("disconnect", handleDisconnect);
-        socket.current.off("receiveMessage", handleReceiveMessage);
-        socket.current.off(
-          "receive-channel-message",
-          handleReceiveChannelMessage
-        );
+      socket.current.on("error", (error) => {
+        console.error("Socket error:", error);
+        toast.error("An error occurred with the chat connection.");
+      });
+
+      socket.current.on("receiveMessage", handleReceiveMessage);
+      socket.current.on("receive-channel-message", handleReceiveChannelMessage);
+
+      return () => {
+        socket.current.off("connect");
+        socket.current.off("connect_error");
+        socket.current.off("disconnect");
+        socket.current.off("error");
+        socket.current.off("receiveMessage");
+        socket.current.off("receive-channel-message");
         socket.current.disconnect();
-      }
-    };
-  }, [
-    userInfo?.id,
-    handleReceiveMessage,
-    handleReceiveChannelMessage,
-    handleError,
-    handleDisconnect,
-  ]);
+      };
+    }
+  }, [userInfo]);
 
   return (
     <SocketContext.Provider value={socket.current}>
