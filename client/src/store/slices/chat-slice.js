@@ -34,22 +34,24 @@ export const createChatSlice = (set, get) => ({
     const selectedChatMessages = get().selectedChatMessages;
     const selectedChatType = get().selectedChatType;
 
-    set({
-      selectedChatMessages: [
-        ...selectedChatMessages,
-        {
-          ...message,
-          recipient:
-            selectedChatType === "channel"
-              ? message.recipient
-              : message.recipient._id,
-          sender:
-            selectedChatType === "channel"
-              ? message.sender
-              : message.sender._id,
-        },
-      ],
-    });
+    if (selectedChatType === "channel") {
+      // For channel messages, keep the sender object as is
+      set({
+        selectedChatMessages: [...selectedChatMessages, message],
+      });
+    } else {
+      // For direct messages, convert sender and recipient to IDs
+      set({
+        selectedChatMessages: [
+          ...selectedChatMessages,
+          {
+            ...message,
+            recipient: message.recipient._id,
+            sender: message.sender._id,
+          },
+        ],
+      });
+    }
   },
   addChannelInChannelList: (message) => {
     const channels = get().channels;
