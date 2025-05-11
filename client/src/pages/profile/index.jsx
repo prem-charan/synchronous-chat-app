@@ -24,6 +24,7 @@ const Profile = () => {
   const [image, setImage] = useState(null);
   const [hovered, setHovered] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -52,11 +53,6 @@ const Profile = () => {
   const saveChanges = async () => {
     if (validateProfile()) {
       try {
-        console.log("Saving profile with data:", {
-          firstName,
-          lastName,
-          color: selectedColor,
-        });
         const response = await apiClient.post(
           UPDATE_PROFILE_ROUTE,
           { firstName, lastName, color: selectedColor },
@@ -67,13 +63,13 @@ const Profile = () => {
             },
           }
         );
+
         if (response.status === 200 && response.data) {
           setUserInfo({ ...response.data });
-          toast.success("Profile updated successfully.");
+          toast.success("Profile updated successfully");
           navigate("/chat");
         } else {
-          toast.error(response.data || "Failed to update profile");
-          console.error("Update profile error:", response);
+          throw new Error(response.data?.message || "Failed to update profile");
         }
       } catch (error) {
         console.error("Profile update error:", error);
@@ -82,7 +78,8 @@ const Profile = () => {
           navigate("/auth");
         } else {
           toast.error(
-            error.response?.data || "An error occurred while updating profile"
+            error.response?.data?.message ||
+              "An error occurred while updating profile"
           );
         }
       }
@@ -103,50 +100,64 @@ const Profile = () => {
 
   const handleImageChange = async (event) => {
     const file = event.target.files[0];
-    console.log({ file });
-    if (file) {
-      try {
-        const formData = new FormData();
-        formData.append("profile-image", file);
-        const response = await apiClient.post(
-          ADD_PROFILE_IMAGE_ROUTE,
-          formData,
-          {
-            withCredentials: true,
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
+    if (!file) return;
+
+    try {
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await apiClient.post(ADD_PROFILE_IMAGE_ROUTE, formData, {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.data.success && response.data.image) {
+        setUserInfo({ ...userInfo, image: response.data.image });
+        setImage(`${HOST}/${response.data.image}`);
+        toast.success("Profile image updated successfully");
+      } else {
+        throw new Error(
+          response.data.message || "Failed to update profile image"
         );
-        if (response.status === 200 && response.data.image) {
-          setUserInfo({ ...userInfo, image: response.data.image });
-          setImage(`${HOST}/${response.data.image}`);
-          toast.success("Image updated successfully.");
-        }
-      } catch (error) {
-        console.error("Image upload error:", error);
-        toast.error("Failed to upload image. Please try again.");
       }
-      // const reader = new FileReader();
-      // reader.onload = () => {
-      //   setImage(reader.result);
-      // };
-      // reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Image upload error:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to upload image. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDeleteImage = async () => {
     try {
+      setIsLoading(true);
       const response = await apiClient.delete(REMOVE_PROFILE_IMAGE_ROUTE, {
         withCredentials: true,
       });
-      if (response.status === 200) {
+
+      if (response.data.success) {
         setUserInfo({ ...userInfo, image: null });
-        toast.success("Image removed successfully.");
         setImage(null);
+        toast.success("Profile image removed successfully");
+      } else {
+        throw new Error(
+          response.data.message || "Failed to remove profile image"
+        );
       }
     } catch (error) {
-      console.log(error);
+      console.error("Image deletion error:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to remove image. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -181,12 +192,11 @@ const Profile = () => {
                 </div>
               )}
             </Avatar>
-            {hovered && (
+            {hovered && !isLoading && (
               <div
                 className="absolute inset-0 flex items-center justify-center bg-black/50 ring-fuchsia-50 rounded-full"
                 onClick={image ? handleDeleteImage : handleFileInputClick}
               >
-                {" "}
                 {image ? (
                   <FaTrash className="text-white text-3xl cursor-pointer" />
                 ) : (
@@ -194,12 +204,17 @@ const Profile = () => {
                 )}
               </div>
             )}
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 ring-fuchsia-50 rounded-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+              </div>
+            )}
             <input
               type="file"
               ref={fileInputRef}
               className="hidden"
               onChange={handleImageChange}
-              name="profile-image"
+              name="image"
               accept=".png, .jpg, .jpeg, .svg, .webp"
             />
           </div>

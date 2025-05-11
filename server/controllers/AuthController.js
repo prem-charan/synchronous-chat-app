@@ -2,6 +2,9 @@ import jwt from "jsonwebtoken";
 import User from "../models/UserModel.js";
 import { compare } from "bcrypt";
 import { renameSync, unlinkSync } from "fs";
+import { existsSync } from "fs";
+import path from "path";
+import fs from "fs/promises";
 const maxAge = 3 * 24 * 60 * 60 * 1000;
 
 const createToken = (email, userId) => {
@@ -30,20 +33,28 @@ export const signup = async (request, response, next) => {
     try {
         const {email, password } = request.body;
         if(!email || !password) {
-            return response.status(400).send("Email and Password is required.")
+            return response.status(400).json({
+                message: "Email and Password is required.",
+                success: false
+            });
         }
         const user = await User.create({email, password});
         const token = createToken(email, user.id);
         response.cookie("jwt", token, getCookieOptions());
-        return response.status(201).json({user:{
-            id: user.id,
-            email: user.email,
-            profileSetup: user.profileSetup,
-        },
-    });
+        return response.status(201).json({
+            success: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                profileSetup: user.profileSetup,
+            }
+        });
     } catch (error) {
-        console.log({error});
-        return response.status(500).send("Internal Server Error");
+        console.error("Signup error:", error);
+        return response.status(500).json({
+            message: "Internal Server Error",
+            success: false
+        });
     }
 };
 
@@ -51,26 +62,32 @@ export const login = async (request, response, next) => {
   try {
     const { email, password } = request.body;
     if (!email || !password) {
-      return response.status(400).send("Email and Password is required.");
+      return response.status(400).json({
+        message: "Email and Password is required.",
+        success: false
+      });
     }
     const user = await User.findOne({ email });
     if(!user) {
-        return response.status(404).send("User with the given email not found");
+        return response.status(404).json({
+            message: "User with the given email not found",
+            success: false
+        });
     }
     const auth = await compare(password, user.password);
     if(!auth) {
-        return response.status(400).send("Password is incorrect.");
+        return response.status(400).json({
+            message: "Password is incorrect.",
+            success: false
+        });
     }
     
-    // Create token and set cookie
     const token = createToken(email, user.id);
     const cookieOpts = getCookieOptions();
-    
-    // Log cookie setup details
-    console.log("Setting cookie with options:", cookieOpts);
     response.cookie("jwt", token, cookieOpts);
     
     return response.status(200).json({
+      success: true,
       token,
       user: {
         id: user.id,
@@ -83,8 +100,11 @@ export const login = async (request, response, next) => {
       },
     });
   } catch (error) {
-    console.log('Login error:', error);
-    return response.status(500).send("Internal Server Error");
+    console.error('Login error:', error);
+    return response.status(500).json({
+      message: "Internal Server Error",
+      success: false
+    });
   }
 };
 
@@ -92,10 +112,14 @@ export const getUserInfo = async (request, response, next) => {
   try {
     const userData = await User.findById(request.userId);
     if (!userData) {
-      return response.status(404).send("User with the given id not found.");
+      return response.status(404).json({
+        message: "User with the given id not found.",
+        success: false
+      });
     }
 
     return response.status(200).json({
+      success: true,
       id: userData.id,
       email: userData.email,
       profileSetup: userData.profileSetup,
@@ -105,8 +129,11 @@ export const getUserInfo = async (request, response, next) => {
       color: userData.color,
     });
   } catch (error) {
-    console.log({ error });
-    return response.status(500).send("Internal Server Error");
+    console.error("Get user info error:", error);
+    return response.status(500).json({
+      message: "Internal Server Error",
+      success: false
+    });
   }
 };
 
@@ -115,53 +142,82 @@ export const updateProfile = async (request, response, next) => {
     const {userId} = request;
     const {firstName, lastName, color} = request.body;
     if(!firstName || !lastName) {
-      return response.status(400).send("Firstname, lastname and color is required.");
+      return response.status(400).json({
+        message: "Firstname, lastname and color is required.",
+        success: false
+      });
     }
     const userData = await User.findByIdAndUpdate(userId, {
       firstName, lastName, color, profileSetup:true
     }, {new: true, runValidators: true});
 
-    // Refresh the token
     const token = createToken(userData.email, userData.id);
     response.cookie("jwt", token, getCookieOptions());
     
     return response.status(200).json({
-        id: userData.id,
-        email: userData.email,
-        profileSetup: userData.profileSetup,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        image: userData.image,
-        color: userData.color,
+      success: true,
+      id: userData.id,
+      email: userData.email,
+      profileSetup: userData.profileSetup,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      image: userData.image,
+      color: userData.color,
     });
   } catch (error) {
-    console.log({ error });
-    return response.status(500).send("Internal Server Error");
+    console.error("Update profile error:", error);
+    return response.status(500).json({
+      message: "Internal Server Error",
+      success: false
+    });
   }
 };
 
 export const addProfileImage = async (request, response, next) => {
   try {
-    if(!request.file) {
-      return response.status(400).send("File is required.");
+    const { userId } = request;
+    const file = request.file;
+
+    if (!file) {
+      return response.status(400).json({
+        message: "No file uploaded",
+        success: false
+      });
     }
 
-    const date = Date.now();
-    let fileName = "uploads/profiles/" + date + request.file.originalname;
-    renameSync(request.file.path, fileName);
+    const user = await User.findById(userId);
+    if (!user) {
+      return response.status(404).json({
+        message: "User not found",
+        success: false
+      });
+    }
 
-    const updatedUser = await User.findByIdAndUpdate(request.userId, {image: fileName}, {new: true, runValidators: true});
+    // Delete old image if exists
+    if (user.image) {
+      const oldImagePath = path.join(process.cwd(), 'uploads', user.image);
+      try {
+        await fs.unlink(oldImagePath);
+      } catch (error) {
+        console.error("Error deleting old image:", error);
+      }
+    }
 
-    // Refresh the token
-    const token = createToken(updatedUser.email, updatedUser.id);
-    response.cookie("jwt", token, getCookieOptions());
+    // Update user with new image
+    user.image = file.filename;
+    await user.save();
 
     return response.status(200).json({
-      image: updatedUser.image,
+      success: true,
+      message: "Profile image updated successfully",
+      image: file.filename
     });
   } catch (error) {
-    console.log({ error });
-    return response.status(500).send("Internal Server Error");
+    console.error("Add profile image error:", error);
+    return response.status(500).json({
+      message: "Internal Server Error",
+      success: false
+    });
   }
 };
 
@@ -169,39 +225,63 @@ export const removeProfileImage = async (request, response, next) => {
   try {
     const { userId } = request;
     const user = await User.findById(userId);
-    
-    if(!user) {
-      return response.status(404).send("User not found");
+
+    if (!user) {
+      return response.status(404).json({
+        message: "User not found",
+        success: false
+      });
     }
-    
-    if(user.image) {
-      unlinkSync(user.image);
+
+    if (!user.image) {
+      return response.status(400).json({
+        message: "No profile image to remove",
+        success: false
+      });
+    }
+
+    const imagePath = path.join(process.cwd(), 'uploads', user.image);
+    try {
+      await fs.unlink(imagePath);
+    } catch (error) {
+      console.error("Error deleting image file:", error);
     }
 
     user.image = null;
     await user.save();
 
-    // Refresh the token
-    const token = createToken(user.email, user.id);
-    response.cookie("jwt", token, getCookieOptions());
-
-    return response.status(200).send("Profile image removed successfully.");
+    return response.status(200).json({
+      success: true,
+      message: "Profile image removed successfully"
+    });
   } catch (error) {
-    console.log({ error });
-    return response.status(500).send("Internal Server Error");
+    console.error("Remove profile image error:", error);
+    return response.status(500).json({
+      message: "Internal Server Error",
+      success: false
+    });
   }
 };
 
 export const logout = async (request, response, next) => {
   try {
     const logoutOptions = getCookieOptions();
-    logoutOptions.maxAge = 1;
+    logoutOptions.maxAge = 0; // Set to 0 instead of 1 to ensure immediate expiration
     
+    // Clear both cookie and token
     response.cookie("jwt", "", logoutOptions);
-    return response.status(200).send("Logout successfull.");
+    response.clearCookie("jwt", logoutOptions);
+    
+    return response.status(200).json({ 
+      message: "Logout successful",
+      success: true 
+    });
   } catch (error) {
     console.log({ error });
-    return response.status(500).send("Internal Server Error");
+    return response.status(500).json({ 
+      message: "Internal Server Error",
+      success: false 
+    });
   }
 };
 

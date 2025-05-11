@@ -8,6 +8,7 @@ import {
   useCallback,
 } from "react";
 import { io } from "socket.io-client";
+import { toast } from "react-hot-toast";
 
 const SocketContext = createContext(null);
 
@@ -68,6 +69,7 @@ export const SocketProvider = ({ children }) => {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      timeout: 10000,
       extraHeaders: {
         "x-auth-token": localStorage.getItem("auth_token"),
       },
@@ -79,6 +81,24 @@ export const SocketProvider = ({ children }) => {
 
     socket.current.on("connect_error", (error) => {
       console.error("Socket connection error:", error);
+      toast.error("Connection error. Please check your internet connection.");
+    });
+
+    socket.current.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
+      if (reason === "io server disconnect") {
+        // Server initiated disconnect, try to reconnect
+        socket.current.connect();
+      }
+    });
+
+    socket.current.on("reconnect_attempt", (attemptNumber) => {
+      console.log(`Attempting to reconnect (${attemptNumber}/5)`);
+    });
+
+    socket.current.on("reconnect_failed", () => {
+      console.error("Failed to reconnect to socket server");
+      toast.error("Failed to establish connection. Please refresh the page.");
     });
 
     socket.current.on("receiveMessage", handleReceiveMessage);
