@@ -266,12 +266,10 @@ export const removeProfileImage = async (request, response, next) => {
 export const logout = async (request, response, next) => {
   try {
     const logoutOptions = getCookieOptions();
-    logoutOptions.maxAge = 0; // Set to 0 instead of 1 to ensure immediate expiration
-    
-    // Clear both cookie and token
+    logoutOptions.maxAge = 0;
+    logoutOptions.expires = new Date(0); // Ensure cookie is expired
     response.cookie("jwt", "", logoutOptions);
     response.clearCookie("jwt", logoutOptions);
-    
     return response.status(200).json({ 
       message: "Logout successful",
       success: true 

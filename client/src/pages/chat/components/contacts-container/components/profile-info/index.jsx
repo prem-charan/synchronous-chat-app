@@ -25,6 +25,7 @@ const ProfileInfo = () => {
         { withCredentials: true }
       );
       if (response.status === 200) {
+        localStorage.clear();
         setUserInfo(undefined);
         navigate("/auth");
       }
