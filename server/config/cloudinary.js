@@ -1,13 +1,15 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
+// Initialize cloudinary configuration
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-export const profileStorage = new CloudinaryStorage({
+// Create storage configurations
+const profileStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'chat-app/profiles',
@@ -16,7 +18,7 @@ export const profileStorage = new CloudinaryStorage({
   }
 });
 
-export const fileStorage = new CloudinaryStorage({
+const fileStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'chat-app/files',
@@ -24,4 +26,4 @@ export const fileStorage = new CloudinaryStorage({
   }
 });
 
-export { cloudinary }; 
+export { profileStorage, fileStorage, cloudinary }; 

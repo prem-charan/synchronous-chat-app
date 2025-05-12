@@ -30,6 +30,8 @@ const MessageContainer = () => {
   const [imageURL, setImageURL] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
 
   useEffect(() => {
     const getMessages = async () => {
@@ -88,8 +90,18 @@ const MessageContainer = () => {
   };
 
   const handleImageError = () => {
-    setImageLoadError(true);
-    toast.error("Failed to load image. Please try again.");
+    if (retryCount < MAX_RETRIES) {
+      setRetryCount((prev) => prev + 1);
+      // Retry loading the image after a short delay
+      setTimeout(() => {
+        setImageLoadError(false);
+      }, 1000);
+    } else {
+      setImageLoadError(true);
+      toast.error(
+        "Failed to load image after multiple attempts. Please try again later."
+      );
+    }
   };
 
   const renderMessages = () => {
@@ -311,12 +323,31 @@ const MessageContainer = () => {
           {showImage && (
             <div className="fixed z-[1000] top-0 left-0 h-[100vh] w-[100vw] flex items-center justify-center backdrop-blur-lg flex-col">
               <div>
-                <img
-                  src={imageURL}
-                  className="h-[80vh] w-full bg-cover"
-                  alt="Preview"
-                  onError={handleImageError}
-                />
+                {imageLoadError ? (
+                  <div className="h-[80vh] w-full flex items-center justify-center bg-black/20">
+                    <div className="text-white text-center">
+                      <p className="text-xl mb-4">Failed to load image</p>
+                      {retryCount < MAX_RETRIES && (
+                        <button
+                          className="bg-purple-700 hover:bg-purple-900 px-4 py-2 rounded"
+                          onClick={() => {
+                            setRetryCount(0);
+                            setImageLoadError(false);
+                          }}
+                        >
+                          Retry
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={imageURL}
+                    className="h-[80vh] w-full bg-cover"
+                    alt="Preview"
+                    onError={handleImageError}
+                  />
+                )}
               </div>
               <div className="flex gap-5 fixed top-0 mt-5">
                 <button

@@ -9,7 +9,7 @@ import {
   logout,
 } from "../controllers/AuthController.js";
 import { verifyToken } from "../middlewares/AuthMiddleware.js";
-import { profileUpload } from "../index.js";
+import { profileUpload } from "../config/multer.js";
 
 const authRoutes = Router();
 
