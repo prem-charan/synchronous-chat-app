@@ -15,6 +15,7 @@ import {
   REMOVE_PROFILE_IMAGE_ROUTE,
   UPDATE_PROFILE_ROUTE,
 } from "@/utils/constants";
+import axios from "axios";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -137,21 +138,25 @@ const Profile = () => {
     }
   };
 
-  const handleDeleteImage = async () => {
+  const handleRemoveImage = async () => {
     try {
-      setIsLoading(true);
-      const response = await apiClient.delete(REMOVE_PROFILE_IMAGE_ROUTE, {
-        withCredentials: true,
-      });
+      const response = await axios.delete(
+        `${import.meta.env.VITE_API_URL}/auth/remove-profile-image`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       if (response.data.success) {
-        setUserInfo({ ...userInfo, image: null });
-        setImage(null);
-        toast.success("Profile image removed successfully");
+        setUserInfo((prev) => ({
+          ...prev,
+          image: null,
+        }));
+        toast.success(response.data.message);
       } else {
-        throw new Error(
-          response.data.message || "Failed to remove profile image"
-        );
+        toast.error(response.data.message || "Failed to remove image");
       }
     } catch (error) {
       console.error("Image deletion error:", error);
@@ -159,8 +164,6 @@ const Profile = () => {
         error.response?.data?.message ||
           "Failed to remove image. Please try again."
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -198,7 +201,7 @@ const Profile = () => {
             {hovered && !isLoading && (
               <div
                 className="absolute inset-0 flex items-center justify-center bg-black/50 ring-fuchsia-50 rounded-full"
-                onClick={image ? handleDeleteImage : handleFileInputClick}
+                onClick={image ? handleRemoveImage : handleFileInputClick}
               >
                 {image ? (
                   <FaTrash className="text-white text-3xl cursor-pointer" />

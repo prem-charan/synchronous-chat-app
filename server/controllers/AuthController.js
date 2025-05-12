@@ -230,22 +230,63 @@ export const removeProfileImage = async (request, response) => {
   try {
     const user = await User.findById(request.userId);
     if (!user) {
-      return response.status(404).json({ message: "User not found" });
+      return response.status(404).json({ 
+        success: false,
+        message: "User not found" 
+      });
     }
 
     if (user.image) {
-      // Delete image from Cloudinary
-      const publicId = user.image.split('/').pop().split('.')[0];
-      await cloudinary.uploader.destroy(publicId);
-      
-      // Remove image URL from user document
-      user.image = null;
-      await user.save();
+      try {
+        // Delete image from Cloudinary
+        const publicId = user.image.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+        
+        // Remove image URL from user document
+        user.image = null;
+        await user.save();
+
+        return response.status(200).json({ 
+          success: true,
+          message: "Profile image removed successfully",
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            image: user.image,
+            color: user.color,
+            profileSetup: user.profileSetup
+          }
+        });
+      } catch (error) {
+        console.error("Error deleting image from Cloudinary:", error);
+        return response.status(500).json({ 
+          success: false,
+          message: "Failed to delete image from storage" 
+        });
+      }
     }
 
-    response.status(200).json({ message: "Profile image removed successfully" });
+    return response.status(200).json({ 
+      success: true,
+      message: "No profile image to remove",
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        image: user.image,
+        color: user.color,
+        profileSetup: user.profileSetup
+      }
+    });
   } catch (error) {
-    response.status(500).json({ message: error.message });
+    console.error("Profile image removal error:", error);
+    return response.status(500).json({ 
+      success: false,
+      message: "Failed to remove profile image" 
+    });
   }
 };
 
