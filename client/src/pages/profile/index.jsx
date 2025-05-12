@@ -140,20 +140,17 @@ const Profile = () => {
 
   const handleRemoveImage = async () => {
     try {
-      const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/auth/remove-profile-image`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      setIsLoading(true);
+      const response = await apiClient.delete(REMOVE_PROFILE_IMAGE_ROUTE, {
+        withCredentials: true,
+      });
 
       if (response.data.success) {
         setUserInfo((prev) => ({
           ...prev,
           image: null,
         }));
+        setImage(null);
         toast.success(response.data.message);
       } else {
         toast.error(response.data.message || "Failed to remove image");
@@ -164,6 +161,8 @@ const Profile = () => {
         error.response?.data?.message ||
           "Failed to remove image. Please try again."
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
