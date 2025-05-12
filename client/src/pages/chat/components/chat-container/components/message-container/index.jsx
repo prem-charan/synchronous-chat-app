@@ -43,7 +43,13 @@ const MessageContainer = () => {
           { withCredentials: true }
         );
         if (response.data.messages) {
-          setSelectedChatMessages(response.data.messages);
+          const formattedMessages = response.data.messages.map((msg) => ({
+            ...msg,
+            sender: msg.sender._id || msg.sender,
+            recipient: msg.recipient?._id || msg.recipient,
+            timestamp: new Date(msg.timestamp),
+          }));
+          setSelectedChatMessages(formattedMessages);
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -61,7 +67,11 @@ const MessageContainer = () => {
           { withCredentials: true }
         );
         if (response.data.messages) {
-          setSelectedChatMessages(response.data.messages);
+          const formattedMessages = response.data.messages.map((msg) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          }));
+          setSelectedChatMessages(formattedMessages);
         }
       } catch (error) {
         console.error("Error fetching channel messages:", error);
@@ -71,9 +81,13 @@ const MessageContainer = () => {
       }
     };
 
-    if (selectedChatData._id) {
-      if (selectedChatType === "contact") getMessages();
-      else if (selectedChatType === "channel") getChannelMessages();
+    if (selectedChatData?._id) {
+      setSelectedChatMessages([]); // Clear existing messages before loading new ones
+      if (selectedChatType === "contact") {
+        getMessages();
+      } else if (selectedChatType === "channel") {
+        getChannelMessages();
+      }
     }
   }, [selectedChatData, selectedChatType, setSelectedChatMessages]);
 

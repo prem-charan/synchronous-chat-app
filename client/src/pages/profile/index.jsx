@@ -114,10 +114,10 @@ const Profile = () => {
         },
       });
 
-      if (response.data.success && response.data.image) {
-        setUserInfo({ ...userInfo, image: response.data.image });
-        setImage(response.data.image);
-        toast.success("Profile image updated successfully");
+      if (response.data.success && response.data.user) {
+        setUserInfo(response.data.user);
+        setImage(response.data.user.image);
+        toast.success(response.data.message);
       } else {
         throw new Error(
           response.data.message || "Failed to update profile image"
@@ -131,6 +131,9 @@ const Profile = () => {
       );
     } finally {
       setIsLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 

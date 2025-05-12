@@ -174,30 +174,55 @@ export const updateProfile = async (request, response, next) => {
 export const addProfileImage = async (request, response) => {
   try {
     if (!request.file) {
-      return response.status(400).json({ message: "No image uploaded" });
+      return response.status(400).json({ 
+        success: false,
+        message: "No image uploaded" 
+      });
     }
 
     const user = await User.findById(request.userId);
     if (!user) {
-      return response.status(404).json({ message: "User not found" });
+      return response.status(404).json({ 
+        success: false,
+        message: "User not found" 
+      });
     }
 
     // Delete old image from Cloudinary if it exists
     if (user.image) {
-      const publicId = user.image.split('/').pop().split('.')[0];
-      await cloudinary.uploader.destroy(publicId);
+      try {
+        const publicId = user.image.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+      } catch (error) {
+        console.error("Error deleting old image:", error);
+        // Continue with the update even if old image deletion fails
+      }
     }
 
     // Update user with new Cloudinary URL
     user.image = request.file.path;
     await user.save();
 
-    response.status(200).json({ 
+    // Return the complete user data
+    return response.status(200).json({ 
+      success: true,
       message: "Profile image updated successfully",
-      image: user.image 
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        image: user.image,
+        color: user.color,
+        profileSetup: user.profileSetup
+      }
     });
   } catch (error) {
-    response.status(500).json({ message: error.message });
+    console.error("Profile image update error:", error);
+    return response.status(500).json({ 
+      success: false,
+      message: "Failed to update profile image. Please try again." 
+    });
   }
 };
 
