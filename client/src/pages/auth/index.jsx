@@ -73,17 +73,13 @@ const Auth = () => {
           } else {
             navigate("/profile");
           }
-        } else {
-          toast.error(response.data || "Invalid response from server");
         }
       } catch (error) {
         console.error("Login error:", error);
         if (error.message && error.message.includes("Network Error")) {
-          toast.error(
-            "Network error. Please check your internet connection or the server might be down."
-          );
+          // Removed network error toast
         } else {
-          toast.error(error.response?.data || "Invalid email or password.");
+          // Removed invalid credentials toastso onec
         }
       }
     }

@@ -119,9 +119,9 @@ apiClient.interceptors.response.use(
             localStorage.removeItem('auth_token');
             window.location.href = '/auth';
         } else if (error.code === 'ECONNABORTED') {
-            toast.error('Request timed out. Please try again.');
+            // Removed toast for timeout
         } else if (!error.response) {
-            toast.error('Network error. Please check your internet connection.');
+            // Removed toast for network error
         }
         return Promise.reject(error);
     }
@@ -144,14 +144,14 @@ const isRetryableError = (error) => {
 // Helper function to handle different types of errors
 const handleError = (error) => {
     if (!error.response) {
-        toast.error("Network error. Please check your internet connection.");
+        // Network error - no toast needed
     } else {
         const status = error.response.status;
         const message = error.response.data?.message || "An error occurred";
 
         switch (status) {
             case 400:
-                toast.error(message || "Invalid request");
+                // Invalid request - no toast needed
                 break;
             case 401:
                 toast.error("Session expired. Please login again.");
@@ -159,22 +159,22 @@ const handleError = (error) => {
                 window.location.href = "/auth";
                 break;
             case 403:
-                toast.error("You don't have permission to perform this action");
+                // Permission error - no toast needed
                 break;
             case 404:
-                toast.error("Resource not found");
+                // Resource not found - no toast needed
                 break;
             case 408:
-                toast.error("Request timed out. Please try again");
+                // Timeout - no toast needed
                 break;
             case 429:
-                toast.error("Too many requests. Please try again later");
+                // Too many requests - no toast needed
                 break;
             case 500:
-                toast.error("Server error. Please try again later");
+                // Server error - no toast needed
                 break;
             default:
-                toast.error(message);
+                // Generic error - no toast needed
         }
     }
 };

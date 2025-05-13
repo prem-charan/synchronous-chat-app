@@ -69,19 +69,11 @@ const Profile = () => {
           setUserInfo({ ...response.data });
           toast.success("Profile updated successfully");
           navigate("/chat");
-        } else {
-          throw new Error(response.data?.message || "Failed to update profile");
         }
       } catch (error) {
         console.error("Profile update error:", error);
         if (error.response?.status === 401) {
-          toast.error("Authentication error. Please log in again.");
           navigate("/auth");
-        } else {
-          toast.error(
-            error.response?.data?.message ||
-              "An error occurred while updating profile"
-          );
         }
       }
     }
@@ -90,8 +82,6 @@ const Profile = () => {
   const handleNavigate = () => {
     if (userInfo.profileSetup) {
       navigate("/chat");
-    } else {
-      toast.error("Please setup profile.");
     }
   };
 
@@ -119,17 +109,9 @@ const Profile = () => {
         setUserInfo(response.data.user);
         setImage(response.data.user.image);
         toast.success(response.data.message);
-      } else {
-        throw new Error(
-          response.data.message || "Failed to update profile image"
-        );
       }
     } catch (error) {
       console.error("Image upload error:", error);
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to upload image. Please try again."
-      );
     } finally {
       setIsLoading(false);
       if (fileInputRef.current) {
@@ -152,15 +134,9 @@ const Profile = () => {
         }));
         setImage(null);
         toast.success(response.data.message);
-      } else {
-        toast.error(response.data.message || "Failed to remove image");
       }
     } catch (error) {
       console.error("Image deletion error:", error);
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to remove image. Please try again."
-      );
     } finally {
       setIsLoading(false);
     }

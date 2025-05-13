@@ -53,7 +53,6 @@ const MessageContainer = () => {
         }
       } catch (error) {
         console.error("Error fetching messages:", error);
-        toast.error("Failed to load messages. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -75,7 +74,6 @@ const MessageContainer = () => {
         }
       } catch (error) {
         console.error("Error fetching channel messages:", error);
-        toast.error("Failed to load channel messages. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -161,7 +159,6 @@ const MessageContainer = () => {
       toast.success("File downloaded successfully");
     } catch (error) {
       console.error("File download error:", error);
-      toast.error("Failed to download file. Please try again.");
     } finally {
       setIsDownloading(false);
       setFileDownloadProgress(0);

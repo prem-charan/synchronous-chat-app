@@ -8,7 +8,6 @@ import {
   useCallback,
 } from "react";
 import { io } from "socket.io-client";
-import { toast } from "sonner";
 
 const SocketContext = createContext(null);
 
@@ -42,7 +41,6 @@ export const SocketProvider = ({ children }) => {
       addContactsInDMContacts(message);
     } catch (error) {
       console.error("Error handling received message:", error);
-      toast.error("Error processing message");
     }
   }, []);
 
@@ -64,13 +62,11 @@ export const SocketProvider = ({ children }) => {
       addChannelInChannelList(message);
     } catch (error) {
       console.error("Error handling channel message:", error);
-      toast.error("Error processing channel message");
     }
   }, []);
 
   const handleError = useCallback((error) => {
     console.error("Socket error:", error);
-    toast.error("Connection error. Please check your internet connection.");
   }, []);
 
   const handleDisconnect = useCallback((reason) => {
@@ -87,8 +83,6 @@ export const SocketProvider = ({ children }) => {
           reconnectAttempts.current += 1;
           socket.current.connect();
         }, delay);
-      } else {
-        toast.error("Failed to reconnect. Please refresh the page.");
       }
     }
   }, []);
@@ -116,21 +110,14 @@ export const SocketProvider = ({ children }) => {
 
       socket.current.on("connect_error", (error) => {
         console.error("Socket connection error:", error);
-        toast.error("Failed to connect to chat server. Please try again.");
       });
 
       socket.current.on("disconnect", (reason) => {
         console.log("Disconnected from chat server:", reason);
-        if (reason === "io server disconnect") {
-          toast.error(
-            "Disconnected from chat server. Please refresh the page."
-          );
-        }
       });
 
       socket.current.on("error", (error) => {
         console.error("Socket error:", error);
-        toast.error("An error occurred with the chat connection.");
       });
 
       socket.current.on("receiveMessage", handleReceiveMessage);
